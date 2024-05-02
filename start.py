@@ -37,6 +37,7 @@ def extract_audio(video_path, voice_path):
         print("提取音频失败:", e)
 
 def asr(voice_path):
+    print("ASR Processing...")
     model = whisper.load_model(whisper_model)
     result = model.transcribe(voice_path, language=whisper_language)
     print(result["text"])
@@ -48,4 +49,3 @@ if __name__ == "__main__":
     copy_video_file(input_video_path,video_path)
     extract_audio(video_path,voice_path)
     voice_text=asr(voice_path)
-    print(voice_path)
