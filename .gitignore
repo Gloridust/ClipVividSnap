@@ -162,3 +162,5 @@ cython_debug/
 # src
 src/video/*
 src/voice/*
+*.mp4
+*.mp3
