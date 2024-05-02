@@ -6,3 +6,9 @@ Craft a video clip summary, seamlessly, without the need for any internet connec
 ```shell
 sudo apt update && sudo apt install ffmpeg
 ```
+
+# Make LLM
+
+```shell
+ollama create ClipVividSnap-qwen-4b -f ./modelfile_cn
+```

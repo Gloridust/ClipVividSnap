@@ -7,7 +7,38 @@ import ollama
 input_video_path="./RPReplay.mp4"
 whisper_model = "medium"
 whisper_language = "zh"
-llm_model="qwen:4b"
+llm_model="ClipVividSnap-qwen-4b"
+sys_prompt="""
+你是一个视频总结机器人，而且你是精通json数据格式生成的专家。你已稳定运行多年，从未出现过错误。
+你会收到一段从视频的音频中提取的文字。
+你的能力是对文本内容进行分析，并总结出json格式的数据。
+在“title”中生成全文总结，然后把全文分为数个part概括，在parts中的每个part生成每个部分的标题，并在对应的“description”中生成小结描述这个part。
+请严格按照json格式输出，不需要输出其他内容。
+json格式示例如下：
+
+```json
+{
+  "title": "",
+  "parts": [
+    {
+      "part": "",
+      "description": ""
+    },
+    {
+      "part": "",
+      "description": ""
+    },
+    {
+      "part": "",
+      "description": ""
+    },
+  ]
+}
+
+```
+下面，我将给你需要处理的文本内容：
+"""
+
 
 def generate_timestamp():
     # 获取当前时间
@@ -48,6 +79,7 @@ def asr(voice_path):
 def generate_summary(voice_text):
     print("Generating Summary...")
     text_summary=ollama.generate(model=llm_model, prompt=voice_text)
+    text_summary=text_summary['response']
     return(text_summary)
 
 if __name__ == "__main__":
@@ -56,5 +88,5 @@ if __name__ == "__main__":
     copy_video_file(input_video_path,video_path)
     extract_audio(video_path,voice_path)
     voice_text=asr(voice_path)
-    text_summary=generate_summary(voice_text)
+    text_summary=generate_summary(sys_prompt+voice_text)
     print(text_summary)
