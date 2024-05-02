@@ -46,7 +46,9 @@ def asr(voice_path):
     return(result["text"])
 
 def generate_summary(voice_text):
+    print("Generating Summary...")
     ollama.generate(model=llm_model, prompt=voice_text)
+    return(text_summary)
 
 if __name__ == "__main__":
     timestamp_str=generate_timestamp()
