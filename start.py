@@ -2,10 +2,12 @@ from moviepy.editor import AudioFileClip
 import datetime
 import shutil
 import whisper
+import ollama
 
 input_video_path="./RPReplay.mp4"
 whisper_model = "medium"
 whisper_language = "zh"
+llm_model="qwen:4b"
 
 def generate_timestamp():
     # 获取当前时间
@@ -43,9 +45,14 @@ def asr(voice_path):
     print(result["text"])
     return(result["text"])
 
+def generate_summary(voice_text):
+    ollama.generate(model=llm_model, prompt=voice_text)
+
 if __name__ == "__main__":
     timestamp_str=generate_timestamp()
     video_path,voice_path=generate_filename(timestamp_str)
     copy_video_file(input_video_path,video_path)
     extract_audio(video_path,voice_path)
     voice_text=asr(voice_path)
+    text_summary=generate_summary(voice_text)
+    print(text_summary)
