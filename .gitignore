@@ -160,7 +160,7 @@ cython_debug/
 #.idea/
 
 # src
-src/video/*
-src/voice/*
+/src/video/*
+/src/voice/*
 *.mp4
 *.mp3

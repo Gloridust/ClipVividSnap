@@ -3,6 +3,7 @@ import datetime
 import shutil
 import whisper
 import ollama
+import os
 
 input_video_path="./RPReplay.mp4"
 whisper_model = "medium"
@@ -39,6 +40,22 @@ json格式示例如下：
 下面，我将给你需要处理的文本内容：
 """
 
+
+def create_directories():
+    # 定义目录路径
+    video_dir = "./src/video/"
+    voice_dir = "./src/voice/"
+    
+    try:
+        # 创建视频目录
+        os.makedirs(video_dir, exist_ok=True)
+        print(f"视频目录 {video_dir} 创建成功！")
+        
+        # 创建音频目录
+        os.makedirs(voice_dir, exist_ok=True)
+        print(f"音频目录 {voice_dir} 创建成功！")
+    except Exception as e:
+        print("创建目录失败:", e)
 
 def generate_timestamp():
     # 获取当前时间
@@ -83,6 +100,7 @@ def generate_summary(voice_text):
     return(text_summary)
 
 if __name__ == "__main__":
+    create_directories()
     timestamp_str=generate_timestamp()
     video_path,voice_path=generate_filename(timestamp_str)
     copy_video_file(input_video_path,video_path)
