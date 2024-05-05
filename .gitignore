@@ -1,3 +1,9 @@
 # src
 *.mp4
 *.mp3
+
+# config
+api_config.py
+
+# cache
+__pycache__/*

@@ -4,6 +4,8 @@ import shutil
 import whisper
 import ollama
 import os
+import requests
+import api_config
 
 input_video_path="./RPReplay.mp4"
 whisper_model = "medium"
@@ -89,10 +91,19 @@ def extract_audio(video_path, voice_path):
 
 def asr(voice_path):
     print("ASR Processing...")
-    model = whisper.load_model(whisper_model)
-    result = model.transcribe(voice_path, language=whisper_language)
-    print(result["text"])
-    return(result["text"])
+    headers = {
+        'Authorization': f'Bearer {api_config.APIKEY}',
+    }
+    url = api_config.asr_url
+    files = {'file':open(voice_path, "rb")}
+    query = {
+                "model":"whisper-1",
+                "language":"zh",
+                "response_format":"json",
+            }
+    response = requests.post(url=url, data=query,files=files, headers=headers)
+    print(response.text)
+    return(response.text)
 
 def generate_summary(voice_text):
     print("Generating Summary...")
