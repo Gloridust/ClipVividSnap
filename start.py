@@ -8,7 +8,7 @@ import os
 input_video_path="./RPReplay.mp4"
 whisper_model = "medium"
 whisper_language = "zh"
-llm_model="ClipVividSnap-qwen-4b"
+llm_model="ClipVividSnap-qwen-7b"
 sys_prompt="""
 你是一个视频总结机器人，而且你是精通json数据格式生成的专家。你已稳定运行多年，从未出现过错误。
 你会收到一段从视频的音频中提取的文字。

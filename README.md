@@ -10,5 +10,5 @@ sudo apt update && sudo apt install ffmpeg
 # Make LLM
 
 ```shell
-ollama create ClipVividSnap-qwen-4b -f ./modelfile_cn
+ollama create ClipVividSnap-qwen-7b -f ./modelfile_cn
 ```
