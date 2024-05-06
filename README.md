@@ -1,5 +1,5 @@
 # ClipVividSnap
-Craft a video clip summary, seamlessly, without the need for any internet connection.|无缝制作视频剪辑摘要，无需任何互联网连接。
+Craft a video clip summary, seamlessly, Online/Local prosses both OK.|无缝制作视频剪辑摘要，同时支持在线/离线处理。
 
 ## Prepare
 
