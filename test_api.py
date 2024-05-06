@@ -15,8 +15,7 @@ data = {
 
 response = requests.post(url, headers=headers, json=data)
 response_json=response.json()
-print("JSON Response ", response_json)
 
 for choice in response_json["choices"]:
-    content = choice["message"]["content"]
+    content = response_json["message"]["content"]
     print("Content:", content)

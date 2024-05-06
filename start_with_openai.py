@@ -128,7 +128,6 @@ def generate_summary(voice_text):
 
     for choice in response_json["choices"]:
         content = choice["message"]["content"]
-        print("Content:", content)
     
     text_summary=content
     return(text_summary)
