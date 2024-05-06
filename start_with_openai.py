@@ -107,9 +107,32 @@ def asr(voice_path):
 
 def generate_summary(voice_text):
     print("Generating Summary...")
-    text_summary=ollama.generate(model=llm_model, prompt=voice_text)
-    text_summary=text_summary['response']
+
+    url = api_config.chat_url
+    headers = {
+    'Content-Type': 'application/json',
+    'Authorization': f'Bearer {api_config.APIKEY}'
+    }
+
+    data = {
+    "model": "gpt-3.5-turbo",
+    "messages": [
+        {"role": "system", "content": sys_prompt},
+        {"role": "user", "content": voice_text},
+        ]
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    response_json=response.json()
+    print("JSON Response:", response_json)
+
+    for choice in response_json["choices"]:
+        content = choice["message"]["content"]
+        print("Content:", content)
+    
+    text_summary=content
     return(text_summary)
+
 
 if __name__ == "__main__":
     create_directories()
