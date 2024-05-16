@@ -1,9 +1,10 @@
-from moviepy.editor import AudioFileClip
-import datetime
-import shutil
 import os
+import shutil
+import datetime
 import requests
-import json
+from moviepy.editor import AudioFileClip
+from pydub import AudioSegment
+from pydub.silence import split_on_silence
 import api_config
 
 input_video_path = "./RPReplay.mp4"
@@ -21,22 +22,20 @@ json格式示例如下：
   "parts": [
     {
       "part": "",
-      "description": "",
-      "start_time": ""
+      "description": ""
     },
     {
       "part": "",
-      "description": "",
-      "start_time": ""
+      "description": ""
     },
     {
       "part": "",
-      "description": "",
-      "start_time": ""
-    }
+      "description": ""
+    },
     // Increase or decrease parts according to needs
   ]
 }
+
 ```
 下面，我将给你需要处理的文本内容：
 """
@@ -47,9 +46,7 @@ def create_directories():
     
     try:
         os.makedirs(video_dir, exist_ok=True)
-        print(f"视频目录 {video_dir} 创建成功！")
         os.makedirs(voice_dir, exist_ok=True)
-        print(f"音频目录 {voice_dir} 创建成功！")
     except Exception as e:
         print("创建目录失败:", e)
 
@@ -61,12 +58,11 @@ def generate_timestamp():
 def generate_filename(timestamp_str):
     video_path = "src/video/" + timestamp_str + ".mp4"
     voice_path = "src/voice/" + timestamp_str + ".mp3"
-    return (video_path, voice_path)
+    return video_path, voice_path
 
 def copy_video_file(input_video_path, video_path):
     try:
         shutil.copy(input_video_path, video_path)
-        print("文件复制成功！")
     except Exception as e:
         print("文件复制失败:", e)
 
@@ -78,21 +74,32 @@ def extract_audio(video_path, voice_path):
         print("提取音频失败:", e)
 
 def asr(voice_path):
-    headers = {
-        'Authorization': f'Bearer {api_config.APIKEY}',
-    }
+    headers = {'Authorization': f'Bearer {api_config.APIKEY}'}
     url = api_config.asr_url
     files = {'file': open(voice_path, "rb")}
     query = {
         "model": "whisper-1",
         "language": "zh",
         "response_format": "json",
-        "timestamps": True
     }
     response = requests.post(url=url, data=query, files=files, headers=headers)
     return response.json()
 
-def generate_summary(voice_text):
+def split_audio_on_silence(audio_path):
+    audio = AudioSegment.from_file(audio_path)
+    chunks = split_on_silence(audio, min_silence_len=500, silence_thresh=-40)
+
+    segments = []
+    start_time = 0
+
+    for chunk in chunks:
+        end_time = start_time + len(chunk)
+        segments.append((chunk, start_time / 1000.0, end_time / 1000.0))
+        start_time = end_time
+
+    return segments
+
+def generate_summary(text):
     url = api_config.chat_url
     headers = {
         'Content-Type': 'application/json',
@@ -103,7 +110,7 @@ def generate_summary(voice_text):
         "model": "gpt-3.5-turbo",
         "messages": [
             {"role": "system", "content": sys_prompt},
-            {"role": "user", "content": voice_text},
+            {"role": "user", "content": text},
         ]
     }
 
@@ -112,7 +119,7 @@ def generate_summary(voice_text):
 
     for choice in response_json["choices"]:
         content = choice["message"]["content"]
-
+    
     return content
 
 if __name__ == "__main__":
@@ -121,38 +128,24 @@ if __name__ == "__main__":
     video_path, voice_path = generate_filename(timestamp_str)
     copy_video_file(input_video_path, video_path)
     extract_audio(video_path, voice_path)
-    voice_response = asr(voice_path)
-    
-    # Extracting text and timestamps from ASR response
-    segments = voice_response['segments']
-    paragraphs = []
-    current_paragraph = []
-    start_time = None
-    
-    for segment in segments:
-        words = segment['words']
-        for word in words:
-            if start_time is None:
-                start_time = word['start']
-            current_paragraph.append(word['text'])
-            if word['text'].endswith(('.', '!', '?')):
-                paragraphs.append((start_time, " ".join(current_paragraph)))
-                current_paragraph = []
-                start_time = word['end'] if words else None
 
+    voice_segments = split_audio_on_silence(voice_path)
     summaries = []
-    for start_time, paragraph in paragraphs:
-        summary_text = generate_summary(paragraph)
-        summaries.append({
-            'part': paragraph,
-            'description': summary_text,
-            'start_time': start_time
-        })
 
-    # Generate final JSON structure
-    final_output = {
-        "title": "视频摘要",
-        "parts": summaries
+    for chunk, start_time, end_time in voice_segments:
+        chunk.export("temp_chunk.wav", format="wav")
+        voice_text = asr("temp_chunk.wav")
+        summary = generate_summary(voice_text)
+        summaries.append({
+            'start_time': start_time,
+            'end_time': end_time,
+            'summary': summary
+        })
+        os.remove("temp_chunk.wav")
+
+    output = {
+        "title": "视频总结",
+        "parts": [{"part": f"Part {i+1}", "description": s['summary']} for i, s in enumerate(summaries)]
     }
 
-    print(json.dumps(final_output, ensure_ascii=False, indent=2))
+    print(output)
