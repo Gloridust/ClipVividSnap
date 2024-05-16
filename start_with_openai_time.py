@@ -83,7 +83,9 @@ def asr(voice_path):
         "response_format": "json",
     }
     response = requests.post(url=url, data=query, files=files, headers=headers)
-    return response.json()
+    response_json = response.json()
+    print("ASR Response:", response_json)  # 打印ASR响应进行调试
+    return response_json.get('text', '')
 
 def split_audio_on_silence(audio_path):
     audio = AudioSegment.from_file(audio_path)
@@ -99,7 +101,7 @@ def split_audio_on_silence(audio_path):
 
     return segments
 
-def generate_summary(text):
+def generate_summary(voice_text):
     url = api_config.chat_url
     headers = {
         'Content-Type': 'application/json',
@@ -110,12 +112,16 @@ def generate_summary(text):
         "model": "gpt-3.5-turbo",
         "messages": [
             {"role": "system", "content": sys_prompt},
-            {"role": "user", "content": text},
+            {"role": "user", "content": voice_text},
         ]
     }
 
     response = requests.post(url, headers=headers, json=data)
     response_json = response.json()
+    print("Summary API Response:", response_json)  # 打印API响应进行调试
+
+    if 'choices' not in response_json:
+        raise KeyError(f"API响应中缺少'choices'键：{response_json}")
 
     for choice in response_json["choices"]:
         content = choice["message"]["content"]
@@ -135,6 +141,9 @@ if __name__ == "__main__":
     for chunk, start_time, end_time in voice_segments:
         chunk.export("temp_chunk.wav", format="wav")
         voice_text = asr("temp_chunk.wav")
+        if not voice_text:
+            print(f"无法从音频段落中获取文字: 开始时间 {start_time}, 结束时间 {end_time}")
+            continue
         summary = generate_summary(voice_text)
         summaries.append({
             'start_time': start_time,
@@ -145,7 +154,7 @@ if __name__ == "__main__":
 
     output = {
         "title": "视频总结",
-        "parts": [{"part": f"Part {i+1}", "description": s['summary']} for i, s in enumerate(summaries)]
+        "parts": [{"part": f"Part {i+1}", "description": s['summary'], "start_time": s['start_time'], "end_time": s['end_time']} for i, s in enumerate(summaries)]
     }
 
     print(output)
